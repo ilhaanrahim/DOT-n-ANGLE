@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DOT AND ANGLE</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+    :root {
+      --bg-1: #f6f8ff;
+      --bg-2: #e9efff;
+      --panel: #ffffff;
+      --panel-soft: #f8faff;
+      --ink: #1f2333;
+      --muted: #5f667b;
+      --stroke: #e2e7f5;
+      --accent: #2b6fff;
+      --accent-2: #19a78d;
+      --danger: #d4556f;
+      --shadow: 0 30px 60px rgba(20, 30, 60, 0.18);
+      --radius: 20px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Space Grotesk", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: radial-gradient(1200px 800px at 10% -10%, #ffffff, transparent),
+                  radial-gradient(1000px 800px at 110% 10%, #f0f4ff, transparent),
+                  linear-gradient(180deg, var(--bg-1), var(--bg-2));
+    }
+
+    .wrapper {
+      width: min(1200px, 94vw);
+      margin: 0 auto;
+      padding: 32px 0 48px;
+    }
+
+    .hidden { display: none !important; }
+
+    .card {
+      background: var(--panel);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 32px;
+    }
+
+    .title {
+      font-family: "Fraunces", serif;
+      font-size: clamp(32px, 4vw, 48px);
+      margin: 0 0 8px;
+      letter-spacing: 0.5px;
+    }
+
+    .subtitle {
+      margin: 0 0 24px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .start-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 24px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .field label {
+      font-weight: 600;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    .segmented {
+      display: inline-flex;
+      background: var(--panel-soft);
+      border: 1px solid var(--stroke);
+      border-radius: 999px;
+      padding: 4px;
+      gap: 6px;
+      width: fit-content;
+    }
+
+    .segmented input { display: none; }
+
+    .segmented label {
+      padding: 8px 18px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .segmented input:checked + label {
+      background: var(--accent);
+      color: white;
+    }
+
+    .name-fields {
+      display: grid;
+      gap: 12px;
+    }
+
+    .name-fields input {
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--stroke);
+      font-size: 15px;
+      font-family: inherit;
+      background: white;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    button {
+      padding: 12px 18px;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--accent);
+      color: white;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    button:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(43, 111, 255, 0.2); }
+    button:active { transform: translateY(0); }
+
+    button.ghost {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--stroke);
+      box-shadow: none;
+    }
+
+    button.ghost:hover { background: rgba(43, 111, 255, 0.08); }
+
+    .game {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .game-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .game-title {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .badge {
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+    }
+
+    .turn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .turn .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .game-body {
+      display: grid;
+      grid-template-columns: minmax(280px, 1fr) 300px;
+      gap: 22px;
+      align-items: start;
+    }
+
+    canvas {
+      width: min(75vw, 640px);
+      height: min(75vw, 640px);
+      background: white;
+      border-radius: 18px;
+      border: 1px solid var(--stroke);
+      box-shadow: 0 16px 30px rgba(31, 35, 51, 0.12);
+      cursor: crosshair;
+    }
+
+    .panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .scoreboard {
+      background: var(--panel);
+      border-radius: 18px;
+      padding: 18px;
+      border: 1px solid var(--stroke);
+    }
+
+    .scoreboard h3 {
+      margin: 0 0 12px;
+      font-size: 16px;
+    }
+
+    .score-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+    }
+
+    .score-row.active {
+      background: var(--panel-soft);
+      border-color: var(--stroke);
+    }
+
+    .score-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+    }
+
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+    }
+
+    .score-value {
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .legend {
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .msg {
+      min-height: 28px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: var(--panel-soft);
+      border: 1px dashed var(--stroke);
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(18, 22, 40, 0.4);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      z-index: 10;
+    }
+
+    .modal-card {
+      background: var(--panel);
+      border-radius: 20px;
+      padding: 28px;
+      width: min(420px, 92vw);
+      box-shadow: var(--shadow);
+    }
+
+    .modal-card h2 {
+      margin: 0 0 8px;
+      font-family: "Fraunces", serif;
+    }
+
+    .modal-list {
+      display: grid;
+      gap: 10px;
+      margin: 16px 0 22px;
+    }
+
+    .winner-text {
+      font-weight: 600;
+      color: var(--accent-2);
+    }
+
+    @media (max-width: 980px) {
+      .start-grid { grid-template-columns: 1fr; }
+      .game-body { grid-template-columns: 1fr; }
+      canvas { width: min(92vw, 640px); height: min(92vw, 640px); }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrapper">
+    <section id="startScreen" class="card">
+      <div class="start-grid">
+        <div>
+          <div class="badge">DOT AND ANGLE</div>
+          <h1 class="title">DOT AND ANGLE</h1>
+          <p class="subtitle">Connect adjacent dots (horizontal, vertical, or diagonal). Scoring is triangle-only: each closed triangle is worth 0.5 points.</p>
+        </div>
+        <div>
+          <div class="field">
+            <label>Players</label>
+            <div class="segmented">
+              <input id="players2" type="radio" name="playerCount" value="2" checked />
+              <label for="players2">2 Players</label>
+              <input id="players3" type="radio" name="playerCount" value="3" />
+              <label for="players3">3 Players</label>
+            </div>
+          </div>
+          <div class="field">
+            <label>Player Names</label>
+            <div id="nameFields" class="name-fields"></div>
+          </div>
+          <div class="actions">
+            <button id="startBtn">Start Game</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="game hidden">
+      <div class="game-header">
+        <div class="game-title">
+          <span class="badge">DOT AND ANGLE</span>
+          <h2 class="title" style="font-size: clamp(26px, 3vw, 34px); margin: 0;">DOT AND ANGLE</h2>
+          <div class="turn"><span class="dot" id="turnDot"></span><span id="turnName">Player 1</span>'s turn</div>
+        </div>
+        <div class="actions">
+          <button id="endBtn" class="ghost">End Game</button>
+          <button id="resetBtn">Reset Board</button>
+          <button id="setupBtn" class="ghost">New Setup</button>
+        </div>
+      </div>
+      <div class="game-body">
+        <canvas id="board" width="640" height="640"></canvas>
+        <aside class="panel">
+          <div class="scoreboard">
+            <h3>Scoreboard</h3>
+            <div id="scoreList"></div>
+            <div class="legend">All scoring is triangle-based: each closed triangle = 0.5 point</div>
+          </div>
+          <div id="msg" class="msg"></div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <div id="endModal" class="modal hidden">
+    <div class="modal-card">
+      <h2>Game Ended</h2>
+      <p class="subtitle winner-text" id="winnerText"></p>
+      <div id="finalScores" class="modal-list"></div>
+      <div class="actions">
+        <button id="playAgainBtn">Play Again</button>
+        <button id="setupAgainBtn" class="ghost">New Setup</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('board');
+    const ctx = canvas.getContext('2d');
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    const startScreen = document.getElementById('startScreen');
+    const gameScreen = document.getElementById('gameScreen');
+    const endModal = document.getElementById('endModal');
+    const nameFields = document.getElementById('nameFields');
+    const scoreList = document.getElementById('scoreList');
+    const msg = document.getElementById('msg');
+    const turnName = document.getElementById('turnName');
+    const turnDot = document.getElementById('turnDot');
+    const winnerText = document.getElementById('winnerText');
+    const finalScores = document.getElementById('finalScores');
+
+    const PLAYER_COLORS = ['#19a78d', '#d4556f', '#4b6bff'];
+    const PLAYER_FILLS = [
+      'rgba(25, 167, 141, 0.24)',
+      'rgba(212, 85, 111, 0.24)',
+      'rgba(75, 107, 255, 0.22)'
+    ];
+
+    const GRID = 10;
+    const PAD = 44;
+    const STEP = (canvas.width - PAD * 2) / (GRID - 1);
+    const DIRS = [];
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        if (dx === 0 && dy === 0) continue;
+        DIRS.push({ dx, dy });
+      }
+    }
+
+    let dots = [];
+    let dotMap = new Map();
+    let edges = new Map();
+    let claimedTriangles = new Map();
+    let players = [];
+    let currentIndex = 0;
+    let selected = null;
+    let gameOver = false;
+
+    function keyOf(v) {
+      return `${v.x},${v.y}`;
+    }
+
+    function faceId(vertices) {
+      return vertices.map(keyOf).sort().join('|');
+    }
+
+    function getDot(x, y) {
+      return dotMap.get(`${x},${y}`);
+    }
+
+    function edgeKey(a, b) {
+      const k1 = `${a.x},${a.y}|${b.x},${b.y}`;
+      const k2 = `${b.x},${b.y}|${a.x},${a.y}`;
+      return k1 < k2 ? k1 : k2;
+    }
+
+    function hasEdge(a, b) {
+      return edges.has(edgeKey(a, b));
+    }
+
+    function initDots() {
+      dots = [];
+      dotMap.clear();
+      for (let y = 0; y < GRID; y++) {
+        for (let x = 0; x < GRID; x++) {
+          const d = { x, y };
+          dots.push(d);
+          dotMap.set(keyOf(d), d);
+        }
+      }
+    }
+
+    function formatScore(score) {
+      return score % 1 === 0 ? String(score) : score.toFixed(1);
+    }
+
+    function renderScoreboard() {
+      scoreList.innerHTML = '';
+      players.forEach((player, index) => {
+        const row = document.createElement('div');
+        row.className = 'score-row';
+        row.dataset.index = index;
+
+        const left = document.createElement('div');
+        left.className = 'score-left';
+
+        const swatch = document.createElement('span');
+        swatch.className = 'swatch';
+        swatch.style.background = player.color;
+
+        const name = document.createElement('span');
+        name.textContent = player.name;
+
+        const score = document.createElement('span');
+        score.className = 'score-value';
+        score.id = `score-${index}`;
+        score.textContent = formatScore(player.score);
+
+        left.appendChild(swatch);
+        left.appendChild(name);
+
+        row.appendChild(left);
+        row.appendChild(score);
+        scoreList.appendChild(row);
+      });
+
+      updateTurnUI();
+    }
+
+    function updateTurnUI() {
+      players.forEach((player, index) => {
+        const row = scoreList.querySelector(`[data-index="${index}"]`);
+        if (!row) return;
+        row.classList.toggle('active', index === currentIndex);
+      });
+
+      const current = players[currentIndex];
+      if (current) {
+        turnName.textContent = current.name;
+        turnDot.style.background = current.color;
+      }
+    }
+
+    function updateScoreValues() {
+      players.forEach((player, index) => {
+        const el = document.getElementById(`score-${index}`);
+        if (el) el.textContent = formatScore(player.score);
+      });
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      claimedTriangles.forEach(claim => {
+        const fill = players[claim.player]?.fillColor || 'rgba(43, 111, 255, 0.2)';
+        ctx.fillStyle = fill;
+        ctx.beginPath();
+        ctx.moveTo(PAD + claim.vertices[0].x * STEP, PAD + claim.vertices[0].y * STEP);
+        ctx.lineTo(PAD + claim.vertices[1].x * STEP, PAD + claim.vertices[1].y * STEP);
+        ctx.lineTo(PAD + claim.vertices[2].x * STEP, PAD + claim.vertices[2].y * STEP);
+        ctx.closePath();
+        ctx.fill();
+      });
+
+      edges.forEach(edge => {
+        ctx.strokeStyle = players[edge.player]?.color || '#333';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(PAD + edge.a.x * STEP, PAD + edge.a.y * STEP);
+        ctx.lineTo(PAD + edge.b.x * STEP, PAD + edge.b.y * STEP);
+        ctx.stroke();
+      });
+
+      dots.forEach(d => {
+        ctx.fillStyle = '#1f2333';
+        ctx.beginPath();
+        ctx.arc(PAD + d.x * STEP, PAD + d.y * STEP, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      if (selected) {
+        ctx.strokeStyle = players[currentIndex]?.color || '#2b6fff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(PAD + selected.x * STEP, PAD + selected.y * STEP, 9, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    function findDot(mx, my) {
+      return dots.find(d => Math.hypot(PAD + d.x * STEP - mx, PAD + d.y * STEP - my) < 10);
+    }
+
+    function isSamePoint(p, q) {
+      return p.x === q.x && p.y === q.y;
+    }
+
+    function sharesEndpoint(a, b, c, d) {
+      return isSamePoint(a, c) || isSamePoint(a, d) || isSamePoint(b, c) || isSamePoint(b, d);
+    }
+
+    function signedArea(a, b, c) {
+      return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+    }
+
+    function segmentsCross(a, b, c, d) {
+      const ab_c = signedArea(a, b, c);
+      const ab_d = signedArea(a, b, d);
+      const cd_a = signedArea(c, d, a);
+      const cd_b = signedArea(c, d, b);
+      const abOpposite = (ab_c > 0 && ab_d < 0) || (ab_c < 0 && ab_d > 0);
+      const cdOpposite = (cd_a > 0 && cd_b < 0) || (cd_a < 0 && cd_b > 0);
+      return abOpposite && cdOpposite;
+    }
+
+    function crossesExistingEdge(a, b) {
+      for (const edge of edges.values()) {
+        if (sharesEndpoint(a, b, edge.a, edge.b)) continue;
+        if (segmentsCross(a, b, edge.a, edge.b)) return true;
+      }
+      return false;
+    }
+
+    function getMoveError(a, b) {
+      if (!a || !b || a === b) return 'Pick two different dots.';
+      const dx = Math.abs(a.x - b.x);
+      const dy = Math.abs(a.y - b.y);
+      if (!((dx === 1 && dy === 0) || (dx === 0 && dy === 1) || (dx === 1 && dy === 1))) {
+        return 'Illegal move. Pick an adjacent dot.';
+      }
+      if (hasEdge(a, b)) return 'That line already exists.';
+      if (crossesExistingEdge(a, b)) return 'Illegal move. Lines cannot cross.';
+      return '';
+    }
+
+    function detectNewFaces(a, b) {
+      let gained = 0;
+
+      for (const dir of DIRS) {
+        const c = getDot(a.x + dir.dx, a.y + dir.dy);
+        if (!c || c === b) continue;
+        if (hasEdge(a, c) && hasEdge(b, c)) {
+          const triVertices = [a, b, c];
+          const triId = faceId(triVertices);
+          if (claimedTriangles.has(triId)) continue;
+
+          claimedTriangles.set(triId, { vertices: triVertices, player: currentIndex });
+          gained += 0.5;
+        }
+      }
+
+      return gained;
+    }
+
+    function advanceTurn() {
+      currentIndex = (currentIndex + 1) % players.length;
+      updateTurnUI();
+    }
+
+    function resetGame() {
+      edges.clear();
+      claimedTriangles.clear();
+      selected = null;
+      gameOver = false;
+      players.forEach(player => { player.score = 0; });
+      currentIndex = 0;
+      msg.textContent = '';
+      updateScoreValues();
+      updateTurnUI();
+      draw();
+    }
+
+    function endGame() {
+      gameOver = true;
+      const sorted = [...players].sort((a, b) => b.score - a.score);
+      const topScore = sorted[0]?.score ?? 0;
+      const winners = sorted.filter(p => p.score === topScore);
+      if (winners.length === 1) {
+        winnerText.textContent = `${winners[0].name} wins with ${formatScore(topScore)} points.`;
+      } else {
+        const names = winners.map(w => w.name).join(', ');
+        winnerText.textContent = `Tie: ${names} with ${formatScore(topScore)} points.`;
+      }
+
+      finalScores.innerHTML = '';
+      players.forEach(player => {
+        const row = document.createElement('div');
+        row.className = 'score-row';
+        const left = document.createElement('div');
+        left.className = 'score-left';
+        const swatch = document.createElement('span');
+        swatch.className = 'swatch';
+        swatch.style.background = player.color;
+        const name = document.createElement('span');
+        name.textContent = player.name;
+        const score = document.createElement('span');
+        score.className = 'score-value';
+        score.textContent = formatScore(player.score);
+        left.appendChild(swatch);
+        left.appendChild(name);
+        row.appendChild(left);
+        row.appendChild(score);
+        finalScores.appendChild(row);
+      });
+
+      endModal.classList.remove('hidden');
+    }
+
+    function showGameScreen() {
+      startScreen.classList.add('hidden');
+      gameScreen.classList.remove('hidden');
+    }
+
+    function showStartScreen() {
+      endModal.classList.add('hidden');
+      gameScreen.classList.add('hidden');
+      startScreen.classList.remove('hidden');
+    }
+
+    function setupPlayers(names) {
+      players = names.map((name, index) => ({
+        name,
+        color: PLAYER_COLORS[index] || '#2b6fff',
+        fillColor: PLAYER_FILLS[index] || 'rgba(43, 111, 255, 0.2)',
+        score: 0
+      }));
+      currentIndex = 0;
+      renderScoreboard();
+      resetGame();
+    }
+
+    function getSelectedPlayerCount() {
+      const selected = document.querySelector('input[name="playerCount"]:checked');
+      return Number(selected?.value || 2);
+    }
+
+    function renderNameFields() {
+      const count = getSelectedPlayerCount();
+      nameFields.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = `Player ${i + 1}`;
+        input.value = `Player ${i + 1}`;
+        input.maxLength = 16;
+        nameFields.appendChild(input);
+      }
+    }
+
+    document.querySelectorAll('input[name="playerCount"]').forEach(radio => {
+      radio.addEventListener('change', renderNameFields);
+    });
+
+    document.getElementById('startBtn').addEventListener('click', () => {
+      const count = getSelectedPlayerCount();
+      const names = Array.from(nameFields.querySelectorAll('input')).slice(0, count).map((input, index) => {
+        const trimmed = input.value.trim();
+        return trimmed || `Player ${index + 1}`;
+      });
+
+      if (names.length < 2) return;
+      setupPlayers(names);
+      showGameScreen();
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', resetGame);
+    document.getElementById('setupBtn').addEventListener('click', showStartScreen);
+    document.getElementById('endBtn').addEventListener('click', endGame);
+    document.getElementById('playAgainBtn').addEventListener('click', () => {
+      endModal.classList.add('hidden');
+      resetGame();
+    });
+    document.getElementById('setupAgainBtn').addEventListener('click', showStartScreen);
+
+    canvas.addEventListener('pointerdown', event => {
+      if (gameOver || players.length === 0) return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const mx = (event.clientX - rect.left) * scaleX;
+      const my = (event.clientY - rect.top) * scaleY;
+      const d = findDot(mx, my);
+      if (!d) return;
+
+      if (!selected) {
+        selected = d;
+        draw();
+        return;
+      }
+
+      const moveError = getMoveError(selected, d);
+      if (moveError) {
+        msg.textContent = moveError;
+        selected = null;
+        draw();
+        return;
+      }
+
+      msg.textContent = '';
+      edges.set(edgeKey(selected, d), { a: selected, b: d, player: currentIndex });
+      const gained = detectNewFaces(selected, d);
+
+      if (gained > 0) {
+        players[currentIndex].score += gained;
+        updateScoreValues();
+      } else {
+        advanceTurn();
+      }
+
+      selected = null;
+      updateTurnUI();
+      draw();
+    });
+
+    initDots();
+    renderNameFields();
+    draw();
+  </script>
+</body>
+</html>
