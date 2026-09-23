@@ -62,6 +62,26 @@
       font-size: 16px;
     }
 
+    .brand-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .brand-copy {
+      min-width: 0;
+    }
+
+    .logo {
+      width: clamp(82px, 12vw, 128px);
+      aspect-ratio: 1;
+      object-fit: contain;
+      border-radius: 18px;
+      box-shadow: 0 16px 30px rgba(31, 35, 51, 0.18);
+      flex: 0 0 auto;
+    }
+
     .start-grid {
       display: grid;
       grid-template-columns: 1.1fr 1fr;
@@ -93,6 +113,11 @@
       width: fit-content;
     }
 
+    .segmented.wrap {
+      flex-wrap: wrap;
+      border-radius: 18px;
+    }
+
     .segmented input { display: none; }
 
     .segmented label {
@@ -106,6 +131,76 @@
     .segmented input:checked + label {
       background: var(--accent);
       color: white;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 14px;
+      background: var(--panel-soft);
+      border: 1px solid var(--stroke);
+      border-radius: 14px;
+    }
+
+    .toggle-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .toggle-title {
+      font-weight: 700;
+    }
+
+    .toggle-detail {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .switch {
+      position: relative;
+      width: 48px;
+      height: 28px;
+      flex: 0 0 auto;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      inset: 0;
+      cursor: pointer;
+      border-radius: 999px;
+      background: #ccd4e6;
+      transition: background 0.2s ease;
+    }
+
+    .slider::before {
+      content: "";
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      left: 3px;
+      top: 3px;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 2px 8px rgba(31, 35, 51, 0.2);
+      transition: transform 0.2s ease;
+    }
+
+    .switch input:checked + .slider {
+      background: var(--accent-2);
+    }
+
+    .switch input:checked + .slider::before {
+      transform: translateX(20px);
     }
 
     .name-fields {
@@ -172,6 +267,18 @@
       gap: 6px;
     }
 
+    .game-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .game-brand .logo {
+      width: 72px;
+      border-radius: 14px;
+      box-shadow: 0 12px 22px rgba(31, 35, 51, 0.14);
+    }
+
     .badge {
       text-transform: uppercase;
       font-size: 12px;
@@ -228,6 +335,57 @@
     .scoreboard h3 {
       margin: 0 0 12px;
       font-size: 16px;
+    }
+
+    .timer-card {
+      background: var(--panel);
+      border-radius: 18px;
+      padding: 18px;
+      border: 1px solid var(--stroke);
+    }
+
+    .timer-card.disabled {
+      opacity: 0.68;
+    }
+
+    .timer-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .timer-head h3 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .timer-value {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--accent);
+      min-width: 48px;
+      text-align: right;
+    }
+
+    .timer-track {
+      height: 10px;
+      border-radius: 999px;
+      background: var(--panel-soft);
+      overflow: hidden;
+      border: 1px solid var(--stroke);
+    }
+
+    .timer-bar {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-2), var(--accent));
+      transition: width 0.2s linear, background 0.2s ease;
+    }
+
+    .timer-bar.warning {
+      background: linear-gradient(90deg, #ffb347, var(--danger));
     }
 
     .score-row {
@@ -317,25 +475,52 @@
       .game-body { grid-template-columns: 1fr; }
       canvas { width: min(92vw, 640px); height: min(92vw, 640px); }
     }
+
+    @media (max-width: 560px) {
+      .card { padding: 22px; }
+      .brand-row { align-items: center; }
+      .logo { width: 76px; border-radius: 14px; }
+      .game-brand { width: 100%; justify-content: space-between; }
+      .segmented { width: 100%; }
+      .segmented label { flex: 1; text-align: center; padding-inline: 10px; }
+    }
   </style>
 </head>
 <body>
   <main class="wrapper">
     <section id="startScreen" class="card">
       <div class="start-grid">
-        <div>
-          <div class="badge">DOT AND ANGLE</div>
-          <h1 class="title">DOT AND ANGLE</h1>
-          <p class="subtitle">Connect adjacent dots (horizontal, vertical, or diagonal). Scoring is triangle-only: each closed triangle is worth 0.5 points.</p>
+        <div class="brand-row">
+          <div class="brand-copy">
+            <div class="badge">DOT AND ANGLE</div>
+            <h1 class="title">DOT AND ANGLE</h1>
+            <p class="subtitle">Connect adjacent dots (horizontal, vertical, or diagonal). Scoring is triangle-only: each closed triangle is worth 0.5 points.</p>
+          </div>
+          <img class="logo" src="logo.png" alt="DOT AND ANGLE logo" />
         </div>
         <div>
           <div class="field">
             <label>Players</label>
-            <div class="segmented">
+            <div class="segmented wrap">
               <input id="players2" type="radio" name="playerCount" value="2" checked />
               <label for="players2">2 Players</label>
               <input id="players3" type="radio" name="playerCount" value="3" />
               <label for="players3">3 Players</label>
+              <input id="players4" type="radio" name="playerCount" value="4" />
+              <label for="players4">4 Players</label>
+            </div>
+          </div>
+          <div class="field">
+            <label>Timer</label>
+            <div class="toggle-row">
+              <div class="toggle-text">
+                <span class="toggle-title">20s Turn Timer</span>
+                <span class="toggle-detail">Skip at 0</span>
+              </div>
+              <label class="switch" aria-label="Enable 20 second turn timer">
+                <input id="turnTimerToggle" type="checkbox" checked />
+                <span class="slider"></span>
+              </label>
             </div>
           </div>
           <div class="field">
@@ -351,10 +536,13 @@
 
     <section id="gameScreen" class="game hidden">
       <div class="game-header">
-        <div class="game-title">
-          <span class="badge">DOT AND ANGLE</span>
-          <h2 class="title" style="font-size: clamp(26px, 3vw, 34px); margin: 0;">DOT AND ANGLE</h2>
-          <div class="turn"><span class="dot" id="turnDot"></span><span id="turnName">Player 1</span>'s turn</div>
+        <div class="game-brand">
+          <img class="logo" src="logo.png" alt="DOT AND ANGLE logo" />
+          <div class="game-title">
+            <span class="badge">DOT AND ANGLE</span>
+            <h2 class="title" style="font-size: clamp(26px, 3vw, 34px); margin: 0;">DOT AND ANGLE</h2>
+            <div class="turn"><span class="dot" id="turnDot"></span><span id="turnName">Player 1</span>'s turn</div>
+          </div>
         </div>
         <div class="actions">
           <button id="endBtn" class="ghost">End Game</button>
@@ -365,6 +553,15 @@
       <div class="game-body">
         <canvas id="board" width="640" height="640"></canvas>
         <aside class="panel">
+          <div id="timerCard" class="timer-card">
+            <div class="timer-head">
+              <h3>Turn Timer</h3>
+              <span id="timerValue" class="timer-value">20</span>
+            </div>
+            <div class="timer-track" aria-hidden="true">
+              <div id="timerBar" class="timer-bar"></div>
+            </div>
+          </div>
           <div class="scoreboard">
             <h3>Scoreboard</h3>
             <div id="scoreList"></div>
@@ -404,14 +601,20 @@
     const turnDot = document.getElementById('turnDot');
     const winnerText = document.getElementById('winnerText');
     const finalScores = document.getElementById('finalScores');
+    const turnTimerToggle = document.getElementById('turnTimerToggle');
+    const timerCard = document.getElementById('timerCard');
+    const timerValue = document.getElementById('timerValue');
+    const timerBar = document.getElementById('timerBar');
 
-    const PLAYER_COLORS = ['#19a78d', '#d4556f', '#4b6bff'];
+    const PLAYER_COLORS = ['#19a78d', '#d4556f', '#4b6bff', '#f0a202'];
     const PLAYER_FILLS = [
       'rgba(25, 167, 141, 0.24)',
       'rgba(212, 85, 111, 0.24)',
-      'rgba(75, 107, 255, 0.22)'
+      'rgba(75, 107, 255, 0.22)',
+      'rgba(240, 162, 2, 0.24)'
     ];
 
+    const TURN_SECONDS = 20;
     const GRID = 10;
     const PAD = 44;
     const STEP = (canvas.width - PAD * 2) / (GRID - 1);
@@ -431,6 +634,9 @@
     let currentIndex = 0;
     let selected = null;
     let gameOver = false;
+    let timerEnabled = true;
+    let timerInterval = null;
+    let turnEndsAt = 0;
 
     function keyOf(v) {
       return `${v.x},${v.y}`;
@@ -522,6 +728,48 @@
         const el = document.getElementById(`score-${index}`);
         if (el) el.textContent = formatScore(player.score);
       });
+    }
+
+    function updateTimerUI(secondsLeft = TURN_SECONDS) {
+      const displayValue = timerEnabled ? secondsLeft : '--';
+      timerValue.textContent = displayValue;
+      timerCard.classList.toggle('disabled', !timerEnabled);
+      timerBar.classList.toggle('warning', timerEnabled && secondsLeft <= 5);
+      timerBar.style.width = timerEnabled ? `${(secondsLeft / TURN_SECONDS) * 100}%` : '100%';
+    }
+
+    function stopTurnTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    function startTurnTimer() {
+      stopTurnTimer();
+      updateTimerUI(TURN_SECONDS);
+      if (!timerEnabled || gameOver || players.length === 0) return;
+
+      turnEndsAt = Date.now() + TURN_SECONDS * 1000;
+      timerInterval = setInterval(() => {
+        const secondsLeft = Math.max(0, Math.ceil((turnEndsAt - Date.now()) / 1000));
+        updateTimerUI(secondsLeft);
+
+        if (secondsLeft === 0) {
+          stopTurnTimer();
+          skipTimedOutTurn();
+        }
+      }, 250);
+    }
+
+    function skipTimedOutTurn() {
+      if (gameOver || players.length === 0) return;
+      const skippedPlayer = players[currentIndex];
+      selected = null;
+      advanceTurn(false);
+      msg.textContent = `${skippedPlayer.name}'s time ran out. Turn skipped.`;
+      draw();
+      startTurnTimer();
     }
 
     function draw() {
@@ -628,12 +876,14 @@
       return gained;
     }
 
-    function advanceTurn() {
+    function advanceTurn(restartTimer = true) {
       currentIndex = (currentIndex + 1) % players.length;
       updateTurnUI();
+      if (restartTimer) startTurnTimer();
     }
 
     function resetGame() {
+      stopTurnTimer();
       edges.clear();
       claimedTriangles.clear();
       selected = null;
@@ -644,9 +894,11 @@
       updateScoreValues();
       updateTurnUI();
       draw();
+      startTurnTimer();
     }
 
     function endGame() {
+      stopTurnTimer();
       gameOver = true;
       const sorted = [...players].sort((a, b) => b.score - a.score);
       const topScore = sorted[0]?.score ?? 0;
@@ -688,6 +940,7 @@
     }
 
     function showStartScreen() {
+      stopTurnTimer();
       endModal.classList.add('hidden');
       gameScreen.classList.add('hidden');
       startScreen.classList.remove('hidden');
@@ -735,8 +988,10 @@
       });
 
       if (names.length < 2) return;
+      timerEnabled = turnTimerToggle.checked;
       setupPlayers(names);
       showGameScreen();
+      startTurnTimer();
     });
 
     document.getElementById('resetBtn').addEventListener('click', resetGame);
@@ -780,16 +1035,18 @@
         players[currentIndex].score += gained;
         updateScoreValues();
       } else {
-        advanceTurn();
+        advanceTurn(false);
       }
 
       selected = null;
       updateTurnUI();
       draw();
+      startTurnTimer();
     });
 
     initDots();
     renderNameFields();
+    updateTimerUI(TURN_SECONDS);
     draw();
   </script>
 </body>
