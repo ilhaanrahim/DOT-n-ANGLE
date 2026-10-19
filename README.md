@@ -38,4 +38,10 @@ Just the game.
 
 ---
 
+## Current web version
 
+The redesigned game supports 2–4 players sharing one screen, a 10×10 board by default, and an optional 15×15 board. Mobile players can tap two dots, highlight legal neighbors, and enlarge the board for easier selection.
+
+The current game scores each completed triangle at 0.5 points and awards another turn; an outline without completed triangles does not score. Online multiplayer is not included.
+
+See [the development guide](DEVELOPMENT.md) for controls, current rules, and regression checks.
