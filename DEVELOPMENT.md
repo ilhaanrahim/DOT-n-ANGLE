@@ -1,8 +1,12 @@
 # Dot & Angle
 
-A local multiplayer strategy game for 2–4 people sharing a screen. No build step or dependencies are needed to play: open `index.html`, or serve this folder with any static host, including GitHub Pages.
+A strategy game for solo play against a local AI, or 2–4 people sharing a screen. No build step, accounts, API keys, or paid services are needed: open `index.html`, or serve this folder with any static host, including GitHub Pages.
 
 Choose a 10×10 board (the default) or 15×15 in setup. Optional player names and a 20-second turn timer work with either size.
+
+Select **Solo vs AI** to meet **Angle**, a medium opponent that looks ahead, collects triangles, and avoids tactical gifts. You play first. The existing **With friends** mode still supports 2–4 people. The rules are identical for everyone.
+
+Angle runs in a local Web Worker so search does not block the board. A shorter local search is used when workers are unavailable (including some `file://` browsers). Search has finite attention and calculation budgets, with varied choices among similarly evaluated moves. It does not deliberately lose or adjust anybody’s points. Solo rounds finish automatically when no legal lines remain.
 
 ## Rules
 
@@ -25,12 +29,16 @@ Keyboard: focus the board, use arrow keys to move, and Enter or Space to select.
 - `index.html`: layout and setup controls
 - `styles.css`: responsive design and reduced-motion support
 - `app.js`: game logic, drawing, timer, and input
-- `tests/game.test.cjs`: rule regression checks for both grid sizes
+- `ai-engine.js`: standalone, seedable strategic engine and tunable medium profile
+- `ai-worker.js`: background search transport
+- `AI-DESIGN.md`: algorithm choice, parameters, calibration, and limitations
+- `tests/`: rule parity, tactical, exhaustive endgame, lifecycle, and calibration checks
 
 Run the checks with Node.js:
 
 ```sh
-node --test tests/game.test.cjs
+node --test tests/*.test.cjs
+node tests/ai-benchmark.cjs --games 20 --nodes 1200
 ```
 
 For a local browser preview:
@@ -39,4 +47,4 @@ For a local browser preview:
 python3 -m http.server 8000
 ```
 
-Open `http://localhost:8000`. Google Fonts are optional; system fonts are used if unavailable. To update GitHub Pages, publish `index.html`, `styles.css`, and `app.js` together.
+Open `http://localhost:8000`. Google Fonts are optional; system fonts are used if unavailable. To update GitHub Pages, publish `index.html`, `styles.css`, `app.js`, `ai-engine.js`, and `ai-worker.js` together. The AI makes no requests to external services.

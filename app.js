@@ -53,6 +53,13 @@ let enlarged = false;
 let keyboardDot = null;
 let pointerStart = null;
 let interactionEpoch = 0;
+let soloMode = false;
+let aiWorker = null;
+let aiDelayHandle = null;
+let aiWatchdog = null;
+let aiRequestId = 0;
+let aiThinking = false;
+let aiProfile = 0.5;
 const savedNames = [];
 const boardViewport = document.getElementById('boardViewport');
 const boardSurface = document.getElementById('boardSurface');
@@ -152,8 +159,11 @@ function updateTurnUI() {
   if (current) {
     turnName.textContent = current.name;
     turnDot.style.background = current.color;
-    document.getElementById('turnSuffix').textContent = '’s turn';
+    document.getElementById('turnSuffix').textContent = isAITurn() ? ' is thinking…' : '’s turn';
   }
+  canvas.setAttribute('aria-disabled', String(isAITurn() || gameOver));
+  canvas.setAttribute('aria-busy', String(aiThinking));
+  document.querySelector('.board-card').classList.toggle('thinking', aiThinking);
 }
 
 function updateScoreValues() {
@@ -185,8 +195,10 @@ function stopTurnTimer() {
 
 function startTurnTimer() {
   interactionEpoch++;
+  cancelAIWork();
   stopTurnTimer();
   updateTimerUI(TURN_SECONDS);
+  if (isAITurn()) scheduleAIMove();
   if (!timerEnabled || gameOver || players.length === 0) return;
 
   turnEndsAt = Date.now() + TURN_SECONDS * 1000;
@@ -349,6 +361,7 @@ function advanceTurn(restartTimer = true) {
 }
 
 function resetGame() {
+  cancelAIWork();
   stopTurnTimer();
   edges.clear();
   claimedTriangles.clear();
@@ -366,8 +379,10 @@ function resetGame() {
 }
 
 function endGame() {
+  cancelAIWork();
   stopTurnTimer();
   gameOver = true;
+  updateTurnUI();
   const sorted = [...players].sort((a, b) => b.score - a.score);
   const topScore = sorted[0]?.score ?? 0;
   const winners = sorted.filter(p => p.score === topScore);
@@ -411,6 +426,8 @@ function showGameScreen() {
 }
 
 function showStartScreen() {
+  cancelAIWork();
+  interactionEpoch++;
   stopTurnTimer();
   endModal.close();
   gameScreen.classList.add('hidden');
@@ -425,6 +442,7 @@ function setupPlayers(names) {
     fillColor: PLAYER_FILLS[index] || 'rgba(43, 111, 255, 0.2)',
     score: 0
   }));
+  if (soloMode) players[1].isAI = true;
   currentIndex = 0;
   renderScoreboard();
   resetGame();
@@ -437,7 +455,14 @@ function getSelectedPlayerCount() {
 
 function renderNameFields() {
   nameFields.querySelectorAll('input').forEach((input, i) => { savedNames[i] = input.value; });
-  const count = getSelectedPlayerCount();
+  const isSolo = document.getElementById('modeSolo').checked;
+  const count = isSolo ? 1 : getSelectedPlayerCount();
+  document.getElementById('playerOptions').classList.toggle('hidden', isSolo);
+  document.querySelectorAll('input[name="playerCount"]').forEach(input => { input.disabled = isSolo; });
+  document.getElementById('soloNote').classList.toggle('hidden', !isSolo);
+  document.getElementById('setupNote').textContent = isSolo
+    ? 'Solo vs Angle · Medium · Runs on your device'
+    : '2–4 players · One screen · Endless angles';
   nameFields.replaceChildren();
   for (let i = 0; i < count; i++) {
     const field = document.createElement('div');
@@ -449,13 +474,20 @@ function renderNameFields() {
     const input = document.createElement('input');
     input.type = 'text';
     input.name = `player${i + 1}`;
-    input.placeholder = `Player ${i + 1}`;
+    input.placeholder = isSolo ? 'Your name' : `Player ${i + 1}`;
     input.value = savedNames[i] ?? '';
     input.maxLength = 16;
     input.setAttribute('aria-label', `Player ${i + 1} name`);
     input.autocomplete = 'off';
     field.append(swatch, input);
     nameFields.appendChild(field);
+  }
+  if (isSolo) {
+    const opponent = document.createElement('div');
+    opponent.className = 'ai-name';
+    opponent.innerHTML = '<span class="swatch"></span><span>Angle</span><span class="ai-label">AI · Medium</span>';
+    opponent.querySelector('.swatch').style.background = PLAYER_COLORS[1];
+    nameFields.appendChild(opponent);
   }
 }
 
@@ -479,7 +511,7 @@ function layoutBoard() {
 
 // This is the same move/scoring sequence as the original game.
 function playDot(d) {
-  if (gameOver || players.length === 0 || !d) return;
+  if (gameOver || players.length === 0 || isAITurn() || !d) return;
   if (!selected) {
     selected = d;
     setMessage('Dot selected. Tap a highlighted neighbor to connect.');
@@ -496,9 +528,14 @@ function playDot(d) {
     draw();
     return;
   }
+  commitMove(selected, d);
+}
+
+function commitMove(a, b, fromAI = false) {
+  if (gameOver || players.length === 0 || (isAITurn() && !fromAI) || getMoveError(a, b)) return false;
   const mover = players[currentIndex];
-  edges.set(edgeKey(selected, d), { a: selected, b: d, player: currentIndex });
-  const gained = detectNewFaces(selected, d);
+  edges.set(edgeKey(a, b), { a, b, player: currentIndex });
+  const gained = detectNewFaces(a, b);
   if (gained > 0) {
     mover.score += gained;
     updateScoreValues();
@@ -506,7 +543,8 @@ function playDot(d) {
     score.classList.remove('bump');
     void score.offsetWidth;
     score.classList.add('bump');
-    setMessage(`Nice angle, ${mover.name}! +${formatScore(gained)} points. You go again.`, true);
+    setMessage(mover.isAI ? `Angle closes a triangle! +${formatScore(gained)} points. Another turn.`
+      : `Nice angle, ${mover.name}! +${formatScore(gained)} points. You go again.`, true);
   } else {
     advanceTurn(false);
     setMessage(`${players[currentIndex].name}, your next connection is waiting.`);
@@ -514,24 +552,113 @@ function playDot(d) {
   selected = null;
   updateTurnUI();
   draw();
+  if (soloMode && DotAngleAI.legalMoves(DotAngleAI.createPosition(aiSnapshot())).length === 0) {
+    endGame();
+    return true;
+  }
   startTurnTimer();
+  return true;
+}
+
+function isAITurn() {
+  return soloMode && !gameOver && players[currentIndex]?.isAI === true;
+}
+
+function aiSnapshot() {
+  return { size: GRID, turn: currentIndex, scores: players.map(p => p.score),
+    edges: Array.from(edges.values(), e => [e.a.y * GRID + e.a.x, e.b.y * GRID + e.b.x]) };
+}
+
+function cancelAIWork() {
+  aiRequestId++;
+  if (aiWorker) aiWorker.terminate();
+  aiWorker = null;
+  clearTimeout(aiDelayHandle);
+  clearTimeout(aiWatchdog);
+  aiDelayHandle = aiWatchdog = null;
+  aiThinking = false;
+  if (players.length) updateTurnUI();
+}
+
+function scheduleAIMove() {
+  if (!isAITurn()) return;
+  const requestId = aiRequestId;
+  const snapshot = aiSnapshot();
+  const seed = crypto.getRandomValues(new Uint32Array(1))[0];
+  const started = performance.now();
+  const delay = 420 + (seed % 260);
+  const current = () => requestId === aiRequestId && isAITurn() && !gameScreen.classList.contains('hidden');
+  aiThinking = true;
+  updateTurnUI();
+  setMessage('Angle is weighing up the next connection…');
+  function finish(result) {
+    if (!current()) return;
+    clearTimeout(aiWatchdog);
+    if (aiWorker) aiWorker.terminate();
+    aiWorker = null;
+    aiDelayHandle = setTimeout(() => {
+      if (!current()) return;
+      if (timerEnabled && Date.now() >= turnEndsAt) { skipTimedOutTurn(); return; }
+      if (!result.move) {
+        if (!DotAngleAI.legalMoves(DotAngleAI.createPosition(aiSnapshot())).length) endGame();
+        return;
+      }
+      const [a, b] = result.move.map(id => getDot(id % GRID, Math.floor(id / GRID)));
+      if (!getMoveError(a, b)) commitMove(a, b, true);
+      else fallback();
+    }, Math.max(0, delay - (performance.now() - started)));
+  }
+  function fallback() {
+    if (!current()) return;
+    clearTimeout(aiWatchdog);
+    if (aiWorker) aiWorker.terminate();
+    aiWorker = null;
+    // file:// and browsers without workers still get bounded strategic search.
+    aiDelayHandle = setTimeout(() => {
+      if (!current()) return;
+      finish(DotAngleAI.chooseMove(snapshot, { seed, profile: aiProfile, timeMs: 45,
+        maxNodes: 1400, maxDepth: 3, rootWidth: 14, branchWidth: 6 }));
+    }, 0);
+  }
+  try {
+    aiWorker = new Worker('ai-worker.js');
+    aiWorker.onmessage = event => {
+      if (!current() || event.data.requestId !== requestId) return;
+      if (event.data.error) fallback();
+      else finish(event.data.result);
+    };
+    aiWorker.onerror = event => { event.preventDefault(); fallback(); };
+    aiWatchdog = setTimeout(fallback, 1800);
+    aiWorker.postMessage({ requestId, snapshot, options: { seed, profile: aiProfile } });
+  } catch (_) { fallback(); }
 }
 
 document.querySelectorAll('input[name="playerCount"]').forEach(radio => {
   radio.addEventListener('change', renderNameFields);
 });
+document.querySelectorAll('input[name="playMode"]').forEach(radio => radio.addEventListener('change', renderNameFields));
 
 document.getElementById('setupForm').addEventListener('submit', event => {
   event.preventDefault();
   const names = Array.from(nameFields.querySelectorAll('input')).map((input, index) =>
     input.value.trim() || `Player ${index + 1}`);
+  soloMode = document.getElementById('modeSolo').checked;
+  const setupError = document.getElementById('setupError');
+  setupError.classList.add('hidden');
+  if (soloMode && typeof DotAngleAI === 'undefined') {
+    setupError.textContent = 'The solo opponent couldn’t load. Refresh the page and try again.';
+    setupError.classList.remove('hidden');
+    return;
+  }
+  if (soloMode) names.push('Angle');
+  aiProfile = crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296;
   GRID = document.querySelector('input[name="gridSize"]:checked').value === '15' ? 15 : 10;
   STEP = (canvas.width - PAD * 2) / (GRID - 1);
   initDots();
   timerEnabled = turnTimerToggle.checked;
   setupPlayers(names);
   showGameScreen();
-  document.getElementById('gameMeta').textContent = `${GRID === 10 ? 'THE CLASSIC' : 'THE BIG PICTURE'} / ${GRID} × ${GRID}`;
+  document.getElementById('gameMeta').textContent = `${soloMode ? 'SOLO · MEDIUM' : GRID === 10 ? 'THE CLASSIC' : 'THE BIG PICTURE'} / ${GRID} × ${GRID}`;
   // Give the dense board roomy touch targets by default on narrow screens.
   enlarged = GRID === 15 && window.matchMedia('(max-width: 600px)').matches;
   boardViewport.scrollTo(0, 0);
@@ -571,7 +698,7 @@ rulesModal.addEventListener('click', event => {
 
 // Wait for release so scrolling a touch board never accidentally makes a move.
 canvas.addEventListener('pointerdown', event => {
-  if (!event.isPrimary || event.button !== 0 || gameOver) return;
+  if (!event.isPrimary || event.button !== 0 || gameOver || isAITurn()) return;
   pointerStart = { id: event.pointerId, x: event.clientX, y: event.clientY,
     scrollX: boardViewport.scrollLeft, scrollY: boardViewport.scrollTop, epoch: interactionEpoch };
 });
@@ -593,7 +720,7 @@ canvas.addEventListener('pointercancel', () => { pointerStart = null; });
 canvas.addEventListener('pointerleave', () => { pointerStart = null; });
 canvas.addEventListener('blur', () => { keyboardDot = null; draw(); });
 canvas.addEventListener('keydown', event => {
-  if (gameOver || players.length === 0) return;
+  if (gameOver || players.length === 0 || isAITurn()) return;
   const directions = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
   if (directions[event.key]) {
     event.preventDefault();

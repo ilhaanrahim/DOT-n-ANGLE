@@ -69,6 +69,18 @@ h1, h2 { font-family: Manrope, sans-serif; }
 .segmented label { flex: 1; text-align: center; padding: 12px 4px; border-radius: 7px; font-size: 12px; cursor: pointer; color: var(--muted); transition: background .2s, box-shadow .2s; }
 .segmented input:checked + label { color: var(--green); background: var(--white); box-shadow: 0 2px 5px #263b3510; font-weight: 700; }
 .segmented input:focus-visible + label, .grid-options input:focus-visible + label { outline: 3px solid var(--orange); outline-offset: 2px; }
+.mode-options { margin-bottom: 11px; }
+.mode-options label { font-weight: 600; }
+.mode-options label span { color: var(--orange); margin-left: 5px; }
+.solo-note { padding: 11px 12px; border: 1px solid #e0e8d4; border-radius: 9px; background: #f1f6e9; font-size: 11px; line-height: 1.7; color: var(--muted); }
+.solo-note strong { display: block; color: var(--green); font-weight: 650; }
+.ai-name { min-height: 43px; padding: 10px 12px; display: flex; gap: 8px; align-items: center; border: 1px dashed var(--line); border-radius: 9px; font-size: 12px; color: var(--muted); }
+.ai-label { font-size: 9px; font-weight: 600; border-radius: 5px; padding: 3px 5px; background: #f0f2eb; color: var(--green); white-space: nowrap; }
+.setup-error { font-size: 11px; color: #a34727; line-height: 1.7; margin-top: 9px; }
+.board-card.thinking .turn-dot { animation: thinking-pulse 1.5s ease-in-out infinite; }
+.board-card.thinking canvas { cursor: progress; }
+.board-card.thinking .turn { color: var(--green); }
+@keyframes thinking-pulse { 50% { box-shadow: 0 0 0 7px #246f5e18; } }
 .name-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 13px; }
 .name-field { position: relative; display: flex; align-items: center; min-width: 0; }
 .name-field .swatch { position: absolute; left: 12px; width: 8px; height: 8px; }

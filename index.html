@@ -4,10 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#f7f6f2" />
-  <meta name="description" content="A little strategy. A lot of triangles. Play Dot & Angle with 2–4 friends on a 10×10 or 15×15 board." />
+  <meta name="description" content="Play Dot & Angle solo against a thoughtful local AI, or with 2–4 friends. Choose a 10×10 or 15×15 board." />
   <title>Dot & Angle — Make your next connection.</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%231e7567'/%3E%3Cpath d='M16 46L32 18L48 46Z' fill='none' stroke='%23e3f4a5' stroke-width='4'/%3E%3C/svg%3E" />
   <link rel="stylesheet" href="styles.css" />
+  <script src="ai-engine.js" defer></script>
   <script src="app.js" defer></script>
 </head>
 <body>
@@ -41,12 +42,18 @@
         <form id="setupForm" class="setup-card">
           <div class="card-heading"><div><span class="eyebrow">THE GATHERING</span><h2>Make it your game.</h2></div><span class="card-spark" aria-hidden="true">✳</span></div>
           <fieldset class="field"><legend>01 <span>Who’s playing?</span></legend>
-            <div class="segmented player-options">
+            <div class="segmented mode-options" role="group" aria-label="Play mode">
+              <input id="modeFriends" type="radio" name="playMode" value="friends" checked /><label for="modeFriends">With friends</label>
+              <input id="modeSolo" type="radio" name="playMode" value="solo" /><label for="modeSolo">Solo vs AI <span aria-hidden="true">✳</span></label>
+            </div>
+            <div id="playerOptions" class="segmented player-options" role="group" aria-label="Number of friends">
               <input id="players2" type="radio" name="playerCount" value="2" checked /><label for="players2">2 players</label>
               <input id="players3" type="radio" name="playerCount" value="3" /><label for="players3">3 players</label>
               <input id="players4" type="radio" name="playerCount" value="4" /><label for="players4">4 players</label>
             </div>
+            <p id="soloNote" class="solo-note hidden"><strong>Meet Angle · Medium</strong> A thoughtful rival with a mind of its own. You play first.</p>
             <div id="nameFields" class="name-fields"></div>
+            <p id="setupError" class="setup-error hidden" role="alert"></p>
           </fieldset>
           <fieldset class="field"><legend>02 <span>Pick your playground.</span></legend>
             <div class="grid-options">
@@ -56,7 +63,7 @@
           </fieldset>
           <div class="timer-setting"><div><label for="turnTimerToggle">A little pressure?</label><p>20 seconds per turn. Skip when time’s up.</p></div><label class="switch"><input id="turnTimerToggle" type="checkbox" checked aria-label="Enable 20 second turn timer" /><span class="slider"></span></label></div>
           <button id="startBtn" class="primary start-button" type="submit">Let’s connect <span aria-hidden="true">↗</span></button>
-          <p class="setup-note">2–4 players <span>·</span> One screen <span>·</span> Endless angles</p>
+          <p id="setupNote" class="setup-note">2–4 players <span>·</span> One screen <span>·</span> Endless angles</p>
         </form>
       </section>
       <section id="gameScreen" class="game hidden" aria-label="Game">
@@ -86,7 +93,7 @@
       <span>Every connection counts. <span class="footer-mark" aria-hidden="true">↗</span></span>
     </footer>
   </div>
-  <dialog id="rulesModal" class="modal"><div class="modal-content"><div class="modal-heading"><span class="eyebrow">A MINUTE TO LEARN</span><button id="closeRulesBtn" class="icon-button" aria-label="Close rules">×</button></div><h2>Find your angle.</h2><ol class="rules-list"><li><strong>Connect two neighbors.</strong> Take turns drawing one line between adjacent dots: horizontally, vertically, or diagonally.</li><li><strong>Keep it clean.</strong> Existing lines can’t be repeated, and lines can’t cross.</li><li><strong>Close a triangle.</strong> Each newly completed triangle earns you 0.5 points, even when other players drew its other sides.</li><li><strong>Keep the momentum.</strong> Score and you play again. Otherwise, the turn passes to the next player.</li><li><strong>Watch the clock.</strong> With the optional timer on, your turn is skipped after 20 seconds.</li></ol><p class="rules-end">Choose “Finish game” when you’re ready to count up. Highest score wins. Equal scores share the win.</p><div class="keyboard-tip">On a phone: tap two dots, no dragging needed. Use Enlarge for more space, then scroll the board. Keyboard: arrows to move, Enter to select, Esc to clear.</div><button id="gotItBtn" class="primary">Got it. Let’s play ↗</button></div></dialog>
+  <dialog id="rulesModal" class="modal"><div class="modal-content"><div class="modal-heading"><span class="eyebrow">A MINUTE TO LEARN</span><button id="closeRulesBtn" class="icon-button" aria-label="Close rules">×</button></div><h2>Find your angle.</h2><ol class="rules-list"><li><strong>Connect two neighbors.</strong> Take turns drawing one line between adjacent dots: horizontally, vertically, or diagonally.</li><li><strong>Keep it clean.</strong> Existing lines can’t be repeated, and lines can’t cross.</li><li><strong>Close a triangle.</strong> Each newly completed triangle earns you 0.5 points, even when other players drew its other sides.</li><li><strong>Keep the momentum.</strong> Score and you play again. Otherwise, the turn passes to the next player.</li><li><strong>Watch the clock.</strong> With the optional timer on, your turn is skipped after 20 seconds.</li></ol><p class="rules-end">Play solo against Angle at medium difficulty, or share a screen with friends. The same rules apply to everyone. Solo rounds finish when no legal lines remain. You can also choose “Finish game” at any time. Highest score wins; equal scores share the win.</p><div class="keyboard-tip">On a phone: tap two dots, no dragging needed. Use Enlarge for more space, then scroll the board. Keyboard: arrows to move, Enter to select, Esc to clear.</div><button id="gotItBtn" class="primary">Got it. Let’s play ↗</button></div></dialog>
   <dialog id="endModal" class="modal"><div class="modal-content"><span class="eyebrow">THAT’S A WRAP</span><div class="finish-art" aria-hidden="true">✳</div><h2>Well connected.</h2><p class="winner-text" id="winnerText"></p><div id="finalScores" class="final-scores"></div><div class="modal-actions"><button id="playAgainBtn" class="primary">One more round ↗</button><button id="setupAgainBtn" class="secondary">New setup</button></div></div></dialog>
 </body>
 </html>

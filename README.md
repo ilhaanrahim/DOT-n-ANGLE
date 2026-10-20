@@ -40,8 +40,8 @@ Just the game.
 
 ## Current web version
 
-The redesigned game supports 2–4 players sharing one screen, a 10×10 board by default, and an optional 15×15 board. Mobile players can tap two dots, highlight legal neighbors, and enlarge the board for easier selection.
+The game supports solo play against Angle (medium difficulty), or 2–4 people sharing one screen. Choose a 10×10 board by default or an optional 15×15 board. Mobile players can tap two dots, highlight legal neighbors, and enlarge the board for easier selection. Angle runs entirely on your device, uses bounded strategic search, and requires no accounts, API keys, or paid services.
 
 The current game scores each completed triangle at 0.5 points and awards another turn; an outline without completed triangles does not score. Online multiplayer is not included.
 
-See [the development guide](DEVELOPMENT.md) for controls, current rules, and regression checks.
+See [the development guide](DEVELOPMENT.md) for controls, current rules, and regression checks, and [the AI design notes](AI-DESIGN.md) for the search algorithm, tunable profile, benchmarks, and limitations.
