@@ -8,7 +8,7 @@ const source = readFileSync(require('node:path').join(__dirname, '../app.js'), '
 function game(size = 10) {
   const names = ['keyOf', 'faceId', 'getDot', 'edgeKey', 'hasEdge', 'initDots', 'formatScore',
     'isSamePoint', 'sharesEndpoint', 'signedArea', 'segmentsCross', 'crossesExistingEdge',
-    'getMoveError', 'detectNewFaces', 'advanceTurn', 'playDot', 'skipTimedOutTurn', 'resetGame', 'findDot'];
+    'getMoveError', 'detectNewFaces', 'advanceTurn', 'playDot', 'commitMove', 'isAITurn', 'skipTimedOutTurn', 'resetGame', 'findDot'];
   const functions = names.map(name => {
     const start = source.indexOf(`function ${name}(`);
     return source.slice(start, source.indexOf('\n}', start) + 2);
@@ -19,10 +19,12 @@ function game(size = 10) {
     let dots = [], dotMap = new Map(), edges = new Map(), claimedTriangles = new Map();
     let players = [{name:'Ada', score:0}, {name:'Lin', score:0}];
     let currentIndex = 0, selected = null, gameOver = false, keyboardDot = null, pointerStart = null;
+    let soloMode = false;
     let timerStarts = 0, message = '';
     const DIRS = [];
     for (let dx=-1; dx<=1; dx++) for (let dy=-1; dy<=1; dy++) if(dx || dy) DIRS.push({dx,dy});
     function draw() {} function updateTurnUI() {} function updateScoreValues() {}
+    function cancelAIWork() {}
     function startTurnTimer() { timerStarts++; } function stopTurnTimer() {}
     function setMessage(text) { message = text; }
     function clearSelection() { selected = null; }
